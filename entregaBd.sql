@@ -4,6 +4,15 @@ GO
 USE sistema_biblioteca;
 GO
 
+DROP TABLE IF EXISTS Usuario
+GO
+
+DROP TABLE IF EXISTS Livro
+GO
+
+DROP TABLE IF EXISTS Emprestimo
+GO
+
 CREATE TABLE Usuario (
   idUsuario INT IDENTITY(1,1) PRIMARY KEY,
   nome VARCHAR(100) NOT NULL,
