@@ -85,8 +85,14 @@ CREATE OR ALTER PROCEDURE sp_livro_delete
     @idLivro INT
 AS
 BEGIN
-    DELETE FROM Livro
-    WHERE idLivro = @idLivro;
+    IF EXISTS (SELECT 1 FROM Emprestimo WHERE idLivro = @idLivro)
+    BEGIN
+        RAISERROR('Não é possível excluir este livro, pois ele possui emprestimos relacionados.', 16, 1);
+    END
+    ELSE
+    BEGIN
+        DELETE FROM Livro WHERE idLivro = @idLivro;
+    END
 END
 GO
 
@@ -134,10 +140,82 @@ CREATE OR ALTER PROCEDURE sp_usuario_delete
     @idUsuario INT
 AS
 BEGIN
-    DELETE FROM Usuario
-    WHERE idUsuario = @idUsuario;
+    IF EXISTS (SELECT 1 FROM Emprestimo WHERE idUsuario = @idUsuario)
+    BEGIN
+        RAISERROR('Não é possível excluir este usuário, pois ele possui empréstimos relacionados.', 16, 1);
+    END
+    ELSE
+    BEGIN
+        DELETE FROM Usuario WHERE idUsuario = @idUsuario;
+    END
 END
 GO
+
+-- CRUD - Tabela Emprestimo
+
+-- INSERT Emprestimo
+CREATE OR ALTER PROCEDURE sp_emprestimo_insert
+    @idLivro INT,
+    @idUsuario INT,
+    @dataEmprestimo DATETIME = NULL,
+    @dataDevolucao DATETIME = NULL,
+    @status VARCHAR(20) = 'EM_ABERTO'
+AS
+BEGIN
+    INSERT INTO Emprestimo (idLivro, idUsuario, dataEmprestimo, dataDevolucao, status)
+    VALUES (@idLivro, @idUsuario, ISNULL(@dataEmprestimo, GETDATE()), @dataDevolucao, @status);
+END
+GO
+
+  -- SELECT Emprestimo
+CREATE OR ALTER PROCEDURE sp_emprestimo_select
+    @idEmprestimo INT = NULL
+AS
+BEGIN
+    SELECT e.idEmprestimo,
+           l.titulo AS tituloLivro,
+           u.nome AS nomeUsuario,
+           e.dataEmprestimo,
+           e.dataDevolucao,
+           e.status
+    FROM Emprestimo e
+    INNER JOIN Livro l ON e.idLivro = l.idLivro
+    INNER JOIN Usuario u ON e.idUsuario = u.idUsuario
+    WHERE @idEmprestimo IS NULL OR e.idEmprestimo = @idEmprestimo;
+END
+GO
+
+-- UPDATE Emprestimo
+CREATE OR ALTER PROCEDURE sp_emprestimo_update
+    @idEmprestimo INT,
+    @idLivro INT,
+    @idUsuario INT,
+    @dataEmprestimo DATETIME,
+    @dataDevolucao DATETIME = NULL,
+    @status VARCHAR(20) = 'EM_ABERTO'
+AS
+BEGIN
+    UPDATE Emprestimo
+    SET idLivro = @idLivro,
+        idUsuario = @idUsuario,
+        dataEmprestimo = @dataEmprestimo,
+        dataDevolucao = @dataDevolucao,
+        status = @status
+    WHERE idEmprestimo = @idEmprestimo;
+END
+GO
+
+-- DELETE Emprestimo
+CREATE OR ALTER PROCEDURE sp_emprestimo_delete
+    @idEmprestimo INT
+AS
+BEGIN
+    DELETE FROM Emprestimo
+    WHERE idEmprestimo = @idEmprestimo;
+END
+GO
+
+
 
 
 
